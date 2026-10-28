@@ -4,11 +4,7 @@
   "description": "GlycoNour - Convertisseur de glycémie (mg/dL, g/L, mmol/L), hors connexion",
   "author": "GlycoNour",
   "private": true,
-  "main": "electron/main.js",
-  "scripts": {
-    "start": "electron .",
-    "dist:win": "electron-builder --win --publish never"
-  },
+  "main": "main.js",
   "devDependencies": {
     "electron": "^33.0.0",
     "electron-builder": "^25.1.8"
@@ -16,39 +12,16 @@
   "build": {
     "appId": "com.glyconour.app",
     "productName": "GlycoNour",
-    "files": [
-      "electron/**",
-      "www/**",
-      "package.json"
-    ],
-    "directories": {
-      "output": "dist"
-    },
+    "files": ["main.js", "index.html", "package.json"],
+    "directories": { "output": "dist" },
     "win": {
       "signAndEditExecutable": false,
       "target": [
-        {
-          "target": "portable",
-          "arch": [
-            "x64"
-          ]
-        },
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        }
+        { "target": "portable", "arch": ["x64"] },
+        { "target": "nsis", "arch": ["x64"] }
       ]
     },
-    "nsis": {
-      "artifactName": "GlycoNour-Setup-${version}.${ext}"
-    },
-    "portable": {
-      "artifactName": "GlycoNour-Portable-${version}.${ext}"
-    }
-  },
-  "allowScripts": {
-    "electron@33.4.11": true
+    "nsis": { "artifactName": "GlycoNour-Setup-${version}.${ext}" },
+    "portable": { "artifactName": "GlycoNour-Portable-${version}.${ext}" }
   }
 }
