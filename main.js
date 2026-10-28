@@ -1,6 +1,9 @@
-// Fenêtre Windows de GlycoNour : charge la page locale, bloque tout accès réseau.
-const { app, BrowserWindow, Menu, session } = require("electron");
+// GlycoNour (Windows) - version diagnostic : affiche les erreurs et permet F12.
+const { app, BrowserWindow, Menu, session, dialog } = require("electron");
 const path = require("path");
+
+// Évite les fenêtres blanches liées au pilote graphique de certains PC.
+app.disableHardwareAcceleration();
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -9,15 +12,35 @@ function createWindow() {
     minWidth: 340,
     minHeight: 560,
     title: "GlycoNour",
+    backgroundColor: "#f4f8fc",
     autoHideMenuBar: true,
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
-      devTools: false,
+      devTools: true,
     },
   });
-  win.loadFile(path.join(__dirname, "..", "www", "index.html"));
+
+  const file = path.join(__dirname, "index.html");
+
+  win.webContents.on("did-fail-load", (_e, code, desc, url) => {
+    dialog.showErrorBox("GlycoNour - erreur de chargement", `${desc} (${code})\n${url}`);
+  });
+  win.webContents.on("render-process-gone", (_e, details) => {
+    dialog.showErrorBox("GlycoNour - erreur", `Le rendu s'est arrêté : ${details.reason}`);
+  });
+  // F12 ou Ctrl+Maj+I : ouvre la console pour voir les erreurs.
+  win.webContents.on("before-input-event", (_e, input) => {
+    const ctrlShiftI = input.control && input.shift && String(input.key).toLowerCase() === "i";
+    if (input.type === "keyDown" && (input.key === "F12" || ctrlShiftI)) {
+      win.webContents.toggleDevTools();
+    }
+  });
+
+  win.loadFile(file).catch((err) => {
+    dialog.showErrorBox("GlycoNour - fichier introuvable", `${String(err)}\n${file}`);
+  });
   win.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
   win.webContents.on("will-navigate", (e, url) => {
     if (!url.startsWith("file://")) e.preventDefault();
@@ -26,7 +49,6 @@ function createWindow() {
 
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
-  // Application 100 % hors connexion : toute requête http(s)/ws est refusée.
   session.defaultSession.webRequest.onBeforeRequest(
     { urls: ["http://*/*", "https://*/*", "ws://*/*", "wss://*/*"] },
     (_details, callback) => callback({ cancel: true })
